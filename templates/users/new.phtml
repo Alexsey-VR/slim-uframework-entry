@@ -1,0 +1,20 @@
+<form action='/users' method='post'>
+  <div>
+    <label>
+      Псевдоним
+      <input type='text' required name='user[nickname]' value="<?= htmlspecialchars($user['nickname']) ?>">
+    </label>
+  </div>
+  <div>
+    <label>
+      email
+      <input type='email' required name='user[email]' value="<?= htmlspecialchars($user['email']) ?>">
+    </label>
+  </div>
+  <div>
+    <label>
+      Регистрация
+      <input type='submit' value='SignUp'>
+    </label>
+  </div>
+</form>

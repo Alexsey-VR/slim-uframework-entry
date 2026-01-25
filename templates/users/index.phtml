@@ -1,0 +1,21 @@
+<form action='/users' method='get'>
+    <input type='search' required name='term' value=<?= htmlspecialchars($term) ?>>
+    <input type='submit' value='Search'>
+</form>
+<table>
+    <?php foreach($users as $key => $user): ?>
+        <?php if (str_contains($user['nickname'], $term)): ?>
+            <tr>
+                <td>
+                    <?= $key ?>
+                </td>
+                <td>
+                    <?= $user['nickname'] ?>
+                </td>
+                <td>
+                    <?= $user['email'] ?>
+                </td>
+            </tr>
+        <?php endif; ?>
+    <?php endforeach; ?>
+</table>

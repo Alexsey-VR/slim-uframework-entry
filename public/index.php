@@ -14,14 +14,16 @@ $container->set('renderer', function () {
 $app = AppFactory::createFromContainer($container);
 $app->addErrorMiddleware(true, true, true);
 
+$router = $app->getRouteCollector()->getRouteParser();
+
 $app->get('/', function ($request, $response) {
     $response->getBody()->write('Welcome to Slim!');
     return $response;
-});
+})->setName('mainPage');
 
 $usersFilePath = __DIR__ . '/../storage/users.json';
 
-$app->get('/users', function ($request, $response) use ($usersFilePath) {
+$app->get('/users', function ($request, $response) use ($usersFilePath, $router) {
     $users = [];
     if (file_exists($usersFilePath)) {
         $jsonFileData = file_get_contents($usersFilePath);
@@ -30,12 +32,13 @@ $app->get('/users', function ($request, $response) use ($usersFilePath) {
 
     $params = [
         'users' => $users,
-        'term' => $request->getQueryParam('term')
+        'term' => $request->getQueryParam('term'),
+        'router' => $router
     ];
     return $this->get('renderer')->render($response, 'users/index.phtml', $params);
-});
+})->setName('usersGet');
 
-$app->post('/users', function ($request, $response) use ($usersFilePath) {
+$app->post('/users', function ($request, $response) use ($usersFilePath, $router) {
     $user = $request->getParsedBodyParam('user');
     $users = [];
     if (file_exists($usersFilePath)) {
@@ -50,30 +53,44 @@ $app->post('/users', function ($request, $response) use ($usersFilePath) {
         $usersFilePath, $jsonUsers
     );
     
-    return $response->withRedirect('/users', 302)
+    return $response->withRedirect($router->urlFor('usersGet'), 302)
                     ->write("nickname{$users[-1]['nickname']}, email = {$users[-1]['email']} registered!");
-});
+})->setName('usersPost');
 
 $app->get('/courses/{id}', function ($request, $response, array $args) {
     $id = $args['id'];
     return $response->write("Course id: {$id}");
-});
-/*
-$app->get('/users/{id}', function ($request, $response, array $args) {
-    $params = ['id' => $args['id'], 'nickname' => "user-{$args['id']}" ];
-    // The specified path is considered relative to the base directory for the
-    // templates specified at the configuration stage.
-    // $this is available thanks to https://php.net/manual/ru/closure.bindto.php
-    // $this is a dependency container in Slim.
-    return $this->get('renderer')->render($response, 'users/show.phtml', $params);
-});
-*/
+})->setName('coursesIdGet');
 
-$app->get('/users/new', function ($request, $response) {
+$app->get('/users/new', function ($request, $response) use ($router) {
     $params = [
-        'user' => ['nickname' => '', 'email' => '']
+        'user' => ['nickname' => '', 'email' => ''],
+        'router' => $router
     ];
     return $this->get('renderer')->render($response, 'users/new.phtml', $params);
+})->setName('newUsersGet');
+
+$app->get('/users/{id}', function ($request, $response, array $args) use ($usersFilePath) {
+    $fileContent = json_decode(file_get_contents($usersFilePath), JSON_OBJECT_AS_ARRAY);
+    $userId = $args['id'];
+    if (isset($fileContent[$userId])) {
+        $params = [
+            'id' => $args['id'],
+            'nickname' => "{$fileContent[$args['id']]['nickname']}"
+        ];
+        // The specified path is considered relative to the base directory for the
+        // templates specified at the configuration stage.
+        // $this is available thanks to https://php.net/manual/ru/closure.bindto.php
+        // $this is a dependency container in Slim.
+        return $this->get('renderer')->render($response, 'users/show.phtml', $params);
+    } else {
+        // The specified path is considered relative to the base directory for the
+        // templates specified at the configuration stage.
+        // $this is available thanks to https://php.net/manual/ru/closure.bindto.php
+        // $this is a dependency container in Slim.
+        return $response->withStatus(404)
+                        ->write("404: введён несуществующий id");
+    }
 });
 
 $app->run();

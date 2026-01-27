@@ -1,7 +1,17 @@
-<form action='<?= $router->urlFor('usersGet') ?>' method='get'>
+<div>
+  <h1>Users</h1>
+</div>
+<div>
+  <hr>
+  <form action='<?= $router->urlFor('usersGet') ?>' method='get'>
     <input type='search' required name='term' value=<?= htmlspecialchars($term) ?>>
     <input type='submit' value='Search'>
-</form>
+  </form>
+  <?php if (count($flash) > 0): ?>
+    <h2 style='color: green'><?= $flash['success'][0] ?></h2>
+  <?php endif ?>
+  <hr>
+</div>
 <table>
     <?php foreach($users as $key => $user): ?>
         <?php if (str_contains($user['nickname'], $term)): ?>

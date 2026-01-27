@@ -5,17 +5,36 @@ require_once __DIR__ . "/../vendor/autoload.php";
 use Slim\Factory\AppFactory;
 use DI\Container;
 
+session_start();
+
 $container = new Container();
 $container->set('renderer', function () {
     // As a parameter the base directory is used to contain a templates
     return new \Slim\Views\PhpRenderer(__DIR__ . '/../templates');
+});
+$container->set('flash', function () {
+    return new \Slim\Flash\Messages();
 });
 
 $app = AppFactory::createFromContainer($container);
 $app->addErrorMiddleware(true, true, true);
 
 $router = $app->getRouteCollector()->getRouteParser();
+/*
+$app->get('/foo', function ($request, $response) {
+    $this->get('flash')->addMessage('success', 'this is a flash message');
 
+    return $response->withRedirect('/bar');
+});
+
+$app->get('/bar', function ($request, $response) {
+    $messages = $this->get('flash')->getMessages();
+    print_r($messages);
+
+    $params = ['flash' => $messages];
+    return $this->get('renderer')->render($response, 'bar.phtml', $params);
+});
+*/
 $app->get('/', function ($request, $response) {
     $response->getBody()->write('Welcome to Slim!');
     return $response;
@@ -24,6 +43,7 @@ $app->get('/', function ($request, $response) {
 $usersFilePath = __DIR__ . '/../storage/users.json';
 
 $app->get('/users', function ($request, $response) use ($usersFilePath, $router) {
+    $messages = $this->get('flash')->getMessages();
     $users = [];
     if (file_exists($usersFilePath)) {
         $jsonFileData = file_get_contents($usersFilePath);
@@ -33,7 +53,8 @@ $app->get('/users', function ($request, $response) use ($usersFilePath, $router)
     $params = [
         'users' => $users,
         'term' => $request->getQueryParam('term'),
-        'router' => $router
+        'router' => $router,
+        'flash' => $messages
     ];
     return $this->get('renderer')->render($response, 'users/index.phtml', $params);
 })->setName('usersGet');
@@ -63,6 +84,7 @@ $app->get('/courses/{id}', function ($request, $response, array $args) {
 })->setName('coursesIdGet');
 
 $app->get('/users/new', function ($request, $response) use ($router) {
+    $this->get('flash')->addMessage('success', 'User was added successfully');
     $params = [
         'user' => ['nickname' => '', 'email' => ''],
         'router' => $router

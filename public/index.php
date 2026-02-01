@@ -7,6 +7,7 @@ require_once __DIR__ . "/../vendor/autoload.php";
 use Slim\Factory\AppFactory;
 use DI\Container;
 use App\Validator as Validator;
+use Slim\Middleware\MethodOverrideMiddleware;
 
 session_start();
 
@@ -21,6 +22,7 @@ $container->set('flash', function () {
 
 $app = AppFactory::createFromContainer($container);
 $app->addErrorMiddleware(true, true, true);
+$app->add(MethodOverrideMiddleware::class);
 
 $router = $app->getRouteCollector()->getRouteParser();
 
@@ -64,7 +66,8 @@ $app->post('/users', function ($request, $response) use ($usersFilePath, $router
         $users[] = $user;
         $jsonUsers = json_encode($users);
         file_put_contents(
-            $usersFilePath, $jsonUsers
+            $usersFilePath,
+            $jsonUsers
         );
         
         return $response->withRedirect($router->urlFor('usersGet'), 302);
@@ -87,6 +90,28 @@ $app->get('/courses/{id}', function ($request, $response, array $args) {
     return $response->write("Course id: {$id}");
 })->setName('coursesIdGet');
 
+$app->get('/users/{id}/edit', function ($request, $response, array $args) use ($usersFilePath) {
+    $id = $args['id'];
+    $users = json_decode(file_get_contents($usersFilePath));
+    $message = $this->get('flash')->getMessages();
+    if (array_key_exists($id, $users)) {
+        $params = [
+            'user' => $user,
+            'id' => $id,
+            'flash' => $message,
+            'errors' => []
+        ];
+        return $this->get('renderer')->render(
+            $response,
+            'users/patch.phtml',
+            $params
+        );
+    } else {
+        return $response->withStatus(404)
+                        ->write('заданный ID пользователя не существует');
+    }
+})->setName('userEdit');
+
 $app->get('/users/new', function ($request, $response) use ($router) {
     $params = [
         'user' => ['nickname' => '', 'email' => ''],
@@ -94,6 +119,36 @@ $app->get('/users/new', function ($request, $response) use ($router) {
     ];
     return $this->get('renderer')->render($response, 'users/new.phtml', $params);
 })->setName('newUsersGet');
+
+$app->patch('/users/{id}', function ($request, $response, array $args) use ($router, $usersFilePath) {
+    $id = $args['id'];
+    $users = json_decode(file_get_contents($usersFilePath), JSON_OBJECT_AS_ARRAY);
+    $user = $request->getParsedBodyParam('user');
+    $validator = new Validator();
+    $errors = $validator->validate($user);
+    if (count($errors) === 0) {
+        $users[$id]['nickname'] = $user['nickname'];
+        $users[$id]['email'] = $user['email'];
+        file_put_contents(
+            $usersFilePath,
+            json_encode($users)
+        );
+        $this->get('flash')->addMessage('success', 'user data successfully updated');
+        return $response->withRedirect(
+            $router->urlFor('userEdit', ['id' => $id])
+        );
+    } else {
+        $params = [
+            'user' => $user,
+            'errors' => $errors
+        ];
+        return $this->get('renderer')->render(
+            $response->withStatus(422),
+            "users/patch.phtml",
+            $params
+        );
+    }
+});
 
 $app->get('/users/{id}', function ($request, $response, array $args) use ($usersFilePath) {
     $fileContent = json_decode(file_get_contents($usersFilePath), JSON_OBJECT_AS_ARRAY);

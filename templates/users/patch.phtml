@@ -1,0 +1,32 @@
+<div>
+  <a href="/users">Пользователи</a>
+</div>
+<form action="/users/<?= $id ?>" method="post">
+  <input type="hidden" name="_METHOD" value="PATCH">
+  <div>
+    <?php if (isset($flash['success'])): ?>
+      <h2 style="color: green">Данные пользователя успешно обновлены</h2>
+    <?php endif ?>
+  </div>
+  <div>
+    <label>
+      Псевдоним
+      <input type='text' required name='user[nickname]' value="<?= htmlspecialchars($user['nickname']) ?>">
+    </label>
+    <?php if (isset($errors['nickname'])): ?>
+      <div style="color: red"><?= $errors['nickname'] ?></div>
+    <?php endif ?>
+  </div>
+  <div>
+    <label>
+      email
+      <input type='email' required name='user[email]' value="<?= htmlspecialchars($user['email']) ?>">
+    </label>
+    <?php if (isset($errors['email'])): ?>
+      <div style="color: red"><?= $errors['email'] ?></div>
+    <?php endif ?>
+  </div>
+  <div>
+    <input type='submit' value='Изменить'>
+  </div>
+</form>

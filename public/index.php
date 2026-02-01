@@ -1,9 +1,12 @@
 <?php
 
+namespace App;
+
 require_once __DIR__ . "/../vendor/autoload.php";
 
 use Slim\Factory\AppFactory;
 use DI\Container;
+use App\Validator as Validator;
 
 session_start();
 
@@ -20,21 +23,7 @@ $app = AppFactory::createFromContainer($container);
 $app->addErrorMiddleware(true, true, true);
 
 $router = $app->getRouteCollector()->getRouteParser();
-/*
-$app->get('/foo', function ($request, $response) {
-    $this->get('flash')->addMessage('success', 'this is a flash message');
 
-    return $response->withRedirect('/bar');
-});
-
-$app->get('/bar', function ($request, $response) {
-    $messages = $this->get('flash')->getMessages();
-    print_r($messages);
-
-    $params = ['flash' => $messages];
-    return $this->get('renderer')->render($response, 'bar.phtml', $params);
-});
-*/
 $app->get('/', function ($request, $response) {
     $response->getBody()->write('Welcome to Slim!');
     return $response;
@@ -62,20 +51,35 @@ $app->get('/users', function ($request, $response) use ($usersFilePath, $router)
 $app->post('/users', function ($request, $response) use ($usersFilePath, $router) {
     $user = $request->getParsedBodyParam('user');
     $users = [];
+
     if (file_exists($usersFilePath)) {
         $jsonFileData = file_get_contents($usersFilePath);
         $users = json_decode($jsonFileData, flags:JSON_OBJECT_AS_ARRAY);
     }
 
-    $users[] = $user;
-    $jsonUsers = json_encode($users);
-    $type = gettype($jsonUsers);
-    file_put_contents(
-        $usersFilePath, $jsonUsers
-    );
-    
-    return $response->withRedirect($router->urlFor('usersGet'), 302)
-                    ->write("nickname{$users[-1]['nickname']}, email = {$users[-1]['email']} registered!");
+    $validator = new Validator();
+    $errors = $validator->validate($user);
+    if (count($errors) === 0) {
+        $this->get('flash')->addMessage('success', 'User was added successfully');
+        $users[] = $user;
+        $jsonUsers = json_encode($users);
+        file_put_contents(
+            $usersFilePath, $jsonUsers
+        );
+        
+        return $response->withRedirect($router->urlFor('usersGet'), 302);
+    }
+
+    $this->get('flash')->addMessage('error', 'Form data has an error');
+    $params = [
+        'user' => ['nickname' => '', 'email' => ''],
+        'errors' => $errors
+    ];
+
+    return $this->get('renderer')->render(
+        $response->withStatus(422),
+        'users/new.phtml',
+        $params);
 })->setName('usersPost');
 
 $app->get('/courses/{id}', function ($request, $response, array $args) {
@@ -84,10 +88,9 @@ $app->get('/courses/{id}', function ($request, $response, array $args) {
 })->setName('coursesIdGet');
 
 $app->get('/users/new', function ($request, $response) use ($router) {
-    $this->get('flash')->addMessage('success', 'User was added successfully');
     $params = [
         'user' => ['nickname' => '', 'email' => ''],
-        'router' => $router
+        'errors' => []
     ];
     return $this->get('renderer')->render($response, 'users/new.phtml', $params);
 })->setName('newUsersGet');
@@ -111,7 +114,7 @@ $app->get('/users/{id}', function ($request, $response, array $args) use ($users
         // $this is available thanks to https://php.net/manual/ru/closure.bindto.php
         // $this is a dependency container in Slim.
         return $response->withStatus(404)
-                        ->write("404: введён несуществующий id");
+                        ->write("введён несуществующий id");
     }
 });
 

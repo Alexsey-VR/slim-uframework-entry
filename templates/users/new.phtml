@@ -1,15 +1,21 @@
-<form action='<?= $router->urlFor('usersPost') ?>' method='post'>
+<form action='/users' method='post'>
   <div>
     <label>
       Псевдоним
       <input type='text' required name='user[nickname]' value="<?= htmlspecialchars($user['nickname']) ?>">
     </label>
+    <?php if (isset($errors['nickname'])): ?>
+      <div style="color: red"><?= $errors['nickname'] ?></div>
+    <?php endif ?>
   </div>
   <div>
     <label>
       email
       <input type='email' required name='user[email]' value="<?= htmlspecialchars($user['email']) ?>">
     </label>
+    <?php if (isset($errors['email'])): ?>
+      <div style="color: red"><?= $errors['email'] ?></div>
+    <?php endif ?>
   </div>
   <div>
     <label>

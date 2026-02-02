@@ -1,0 +1,15 @@
+<form action="/users/<?= $user['id'] ?>" method="post">
+  <input type='hidden' name="_METHOD" value="DELETE">
+  <fieldset>
+    <legend>Вы точно хотите удалить пользователя <?= $user['nickname'] ?>?</legend>
+    <div>
+      <input type='radio' id='Positive' name='user[remove]' value='true'>
+      <label for='Positive'>Да, удалить</label>
+    <div>
+    <div>
+      <input type='radio' id='Negative' name='user[remove]' value='false'>
+      <label for='Negative'>Нет</label>
+    </div>
+  </fieldset>
+  <input type="submit" value="Confirm">
+</form>

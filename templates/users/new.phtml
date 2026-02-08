@@ -1,10 +1,10 @@
 <div>
-  <a href="/users">Пользователи</a>
+  <a href="/users">Users</a>
 </div>
 <form action='/users' method='post'>
   <div>
     <label>
-      Псевдоним
+      Nickname
       <input type='text' required name='user[nickname]' value="<?= htmlspecialchars($user['nickname']) ?>">
     </label>
     <?php if (isset($errors['nickname'])): ?>
@@ -22,7 +22,7 @@
   </div>
   <div>
     <label>
-      Регистрация
+      Register
       <input type='submit' value='SignUp'>
     </label>
   </div>

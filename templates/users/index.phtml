@@ -1,14 +1,14 @@
 <div>
-  <a href="/users">Пользователи</a>
+  <a href="/users">Users</a>
 </div>
 <div>
-  <a href="/users/new">Добавить пользователя</a>
+  <a href="/users/new">Add user</a>
 </div>
 <div>
   <hr>
   <form action='<?= $router->urlFor('usersGet') ?>' method='get'>
     <input type='search' required name='term' value=<?= htmlspecialchars($term) ?>>
-    <input type='submit' value='Поиск'>
+    <input type='submit' value='Search'>
   </form>
   <?php if (count($flash) > 0): ?>
     <h2 style='color: green'><?= $flash['success'][0] ?></h2>

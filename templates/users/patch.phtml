@@ -1,16 +1,16 @@
 <div>
-  <a href="/users">Пользователи</a>
+  <a href="/users">Users</a>
 </div>
 <form action="/users/<?= $user['id'] ?>" method="post">
   <input type="hidden" name="_METHOD" value="PATCH">
   <div>
     <?php if (isset($flash['success'])): ?>
-      <h2 style="color: green">Данные пользователя успешно обновлены</h2>
+      <h2 style="color: green">User data updated successfully</h2>
     <?php endif ?>
   </div>
   <div>
     <label>
-      Псевдоним
+      Nickname
       <input type='text' required name='user[nickname]' value="<?= htmlspecialchars($user['nickname']) ?>">
     </label>
     <?php if (isset($errors['nickname'])): ?>
@@ -27,6 +27,6 @@
     <?php endif ?>
   </div>
   <div>
-    <input type='submit' value='Изменить'>
+    <input type='submit' value='Change'>
   </div>
 </form>
